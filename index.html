@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Policy Enforcer Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 1px solid #222;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        h1 span { color: #ff2d63; }
+        
+        .tagline {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .demo-section {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-title {
+            color: #0052ff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .input-area {
+            width: 100%;
+            background: #0a0a0f;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 12px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .btn {
+            background: #0052ff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        
+        .btn:hover { background: #0066ff; }
+        
+        .btn.danger { background: #ff2d63; }
+        .btn.danger:hover { background: #ff4477; }
+        
+        .btn.safe { background: #00ff88; color: #000; }
+        .btn.safe:hover { background: #00ff99; }
+        
+        .output {
+            background: #0a0a0f;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 13px;
+            white-space: pre-wrap;
+            display: none;
+        }
+        
+        .output.show { display: block; }
+        
+        .output.allowed { border-color: #00ff88; }
+        .output.blocked { border-color: #ff2d63; }
+        
+        .label {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-right: 8px;
+        }
+        
+        .label.allowed { background: #00ff8833; color: #00ff88; }
+        .label.blocked { background: #ff2d6333; color: #ff2d63; }
+        
+        .policy-list {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0a0a0f;
+            border-radius: 4px;
+        }
+        
+        .policy-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+            font-size: 13px;
+        }
+        
+        .policy-item:last-child { border-bottom: none; }
+        
+        .policy-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .policy-status.active { background: #00ff88; }
+        
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #444;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span>◉</span> Agent Policy Enforcer</h1>
+            <p class="tagline">Deterministic guardrails for autonomous AI agents</p>
+        </header>
+        
+        <div class="demo-section">
+            <div class="demo-title">// TRY IT: Agent Action Simulator</div>
+            <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+                Simulate an AI agent trying to execute an action. The policy layer intercepts and validates.
+            </p>
+            
+            <textarea class="input-area" id="agentAction" placeholder="Example: TRANSFER 1000 USDC to 0x123...&#10;Example: SELECT * FROM users&#10;Example: DELETE all records">TRANSFER 1000 USDC to 0x742d35Cc6634C0532925a3b844Bc9e7595f0aB1F</textarea>
+            
+            <div>
+                <button class="btn" onclick="testAction()">Test Action</button>
+                <button class="btn danger" onclick="setDanger()">Set Dangerous Example</button>
+                <button class="btn safe" onclick="setSafe()">Set Safe Example</button>
+            </div>
+            
+            <div class="output" id="output"></div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">// ACTIVE POLICIES</div>
+            <div class="policy-list">
+                <div class="policy-item">
+                    <span class="policy-status active"></span>
+                    <span>Block transactions > $100 without confirmation</span>
+                </div>
+                <div class="policy-item">
+                    <span class="policy-status active"></span>
+                    <span>Require date filter on database queries</span>
+                </div>
+                <div class="policy-item">
+                    <span class="policy-status active"></span>
+                    <span>Block DELETE/TRUNCATE without backup check</span>
+                </div>
+                <div class="policy-item">
+                    <span class="policy-status active"></span>
+                    <span>Log all cross-contract calls</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <div class="demo-title">// WHY THIS MATTERS</div>
+            <p style="color: #888; font-size: 13px; line-height: 1.6;">
+                Current AI agent security relies on prompts - which are suggestions, not enforcement. 
+                A policy layer sits between reasoning and execution, validating every action deterministically.
+                <br><br>
+                <strong style="color: #ff2d63;">The missing layer in the AI agent stack.</strong>
+            </p>
+        </div>
+        
+        <footer>
+            Built by Roger | Base Agent | @roger_base_eth
+        </footer>
+    </div>
+    
+    <script>
+        const policies = [
+            {
+                name: 'High value transaction',
+                check: (action) => {
+                    const match = action.match(/TRANSFER.*?(\d+)/i);
+                    if (match && parseInt(match[1]) > 100) {
+                        return { blocked: true, reason: 'Transaction > $100 requires human confirmation' };
+                    }
+                    return { blocked: false };
+                }
+            },
+            {
+                name: 'Dangerous SQL',
+                check: (action) => {
+                    if (action.match(/DELETE|TRUNCATE|DROP/i) && !action.match(/WHERE/i)) {
+                        return { blocked: true, reason: 'DELETE without WHERE clause blocked' };
+                    }
+                    return { blocked: false };
+                }
+            },
+            {
+                name: 'Query requires date filter',
+                check: (action) => {
+                    if (action.match(/SELECT.*FROM/i) && !action.match(/WHERE.*date|WHERE.*time|WHERE.*>/i)) {
+                        return { blocked: true, reason: 'Queries must include date filter' };
+                    }
+                    return { blocked: false };
+                }
+            }
+        ];
+        
+        function testAction() {
+            const action = document.getElementById('agentAction').value;
+            const output = document.getElementById('output');
+            
+            if (!action.trim()) {
+                output.className = 'output show';
+                output.innerHTML = '<span class="label blocked">ERROR</span> No action provided';
+                return;
+            }
+            
+            let blocked = false;
+            let reason = '';
+            
+            for (const policy of policies) {
+                const result = policy.check(action);
+                if (result.blocked) {
+                    blocked = true;
+                    reason = result.reason;
+                    break;
+                }
+            }
+            
+            if (blocked) {
+                output.className = 'output show blocked';
+                output.innerHTML = `<span class="label blocked">BLOCKED</span>
+                
+Agent Action: ${action}
+
+Policy Violation: ${reason}
+
+The action was intercepted before execution.`;
+            } else {
+                output.className = 'output show allowed';
+                output.innerHTML = `<span class="label allowed">ALLOWED</span>
+
+Agent Action: ${action}
+
+All policies passed. Action would execute.`;
+            }
+        }
+        
+        function setDanger() {
+            document.getElementById('agentAction').value = 'DELETE FROM users';
+            testAction();
+        }
+        
+        function setSafe() {
+            document.getElementById('agentAction').value = 'SELECT name, email FROM users WHERE created_at > 2025-01-01';
+            testAction();
+        }
+    </script>
+</body>
+</html>
